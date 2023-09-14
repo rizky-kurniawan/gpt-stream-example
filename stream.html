@@ -50,8 +50,8 @@
             const apiUrl = 'http://127.0.0.1:3000/api/v1';
 
             const urlParams = new URLSearchParams(window.location.search);
-            const chatIdParam = urlParams.get('chatId');
-            if (chatIdParam) {
+            let chatId = urlParams.get('chatId');
+            if (chatId) {
                 chat.style.display = 'none';
                 startButton.style.display = 'none';
                 getHistoryButton.style.display = 'inline';
@@ -149,7 +149,7 @@
 
                 const json = await initializeResponse.json();
 
-                const chatId = json.data.chatId;
+                chatId = json.data.chatId;
 
                 const url = new URL(window.location.href);
                 url.searchParams.set("chatId", chatId);
@@ -160,17 +160,25 @@
                     content: '',
                 })
 
-                sendButton.addEventListener('click', async () => {
-                    const messageContent = messageInput.value;
-                    if (messageContent == '') {
-                        alert('Please put message');
-                        return;
-                    }
-                    messageInput.value = '';
-                    await sendChat(chatId, token, {
-                        content: messageContent,
-                    }, 'user')
-                });
+            });
+            
+            sendButton.addEventListener('click', async () => {
+                const token = tokenInput.value;
+
+                if (token == '') {
+                    alert('Please put access token');
+                    return;
+                }
+
+                const messageContent = messageInput.value;
+                if (messageContent == '') {
+                    alert('Please put message');
+                    return;
+                }
+                messageInput.value = '';
+                await sendChat(chatId, token, {
+                    content: messageContent,
+                }, 'user')
             });
 
             getHistoryButton.addEventListener('click', async () => {
@@ -184,7 +192,7 @@
                 getHistoryButton.style.display = 'none';
                 chat.style.display = 'block';
 
-                const getHistoryResponse = await fetch(`${apiUrl}/gpt/history?chatId=${chatIdParam}`, {
+                const getHistoryResponse = await fetch(`${apiUrl}/gpt/history?chatId=${chatId}`, {
                     method: 'GET',
                     headers: {
                         'Content-Type': 'application/json',
@@ -193,8 +201,6 @@
                 })
 
                 const historyJson = await getHistoryResponse.json();
-
-                console.log(historyJson)
 
                 const messages = historyJson.data.messages;
 
