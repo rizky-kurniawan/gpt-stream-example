@@ -21,6 +21,7 @@
                         </div>
                         <div class="text-center">
                             <button id="start" class="btn btn-primary">Start Chat</button>
+                            <button id="getHistory" class="btn btn-primary" style="display: none;">Get History</button>
                         </div>
                         <div id="chat" style="display: none;">
                             <div class="row g-3" id="messages">
@@ -41,11 +42,22 @@
             crossorigin="anonymous"></script>
         <script>
             const startButton = document.getElementById('start');
+            const getHistoryButton = document.getElementById('getHistory');
             const messageInput = document.getElementById('message');
             const tokenInput = document.getElementById('token');
             const sendButton = document.getElementById('send');
             const chat = document.getElementById('chat');
             const apiUrl = 'http://127.0.0.1:3000/api/v1';
+
+            const urlParams = new URLSearchParams(window.location.search);
+            const chatIdParam = urlParams.get('chatId');
+            if (chatIdParam) {
+                chat.style.display = 'none';
+                startButton.style.display = 'none';
+                getHistoryButton.style.display = 'inline';
+
+                const token = tokenInput.value;
+            }
 
             const pushMessageElement = (data) => {
                 const messages = document.querySelector('#messages');
@@ -124,6 +136,7 @@
                 }
 
                 startButton.style.display = 'none';
+                getHistoryButton.style.display = 'none';
                 chat.style.display = 'block';
 
                 const initializeResponse = await fetch(`${apiUrl}/gpt/initialize`, {
@@ -159,6 +172,40 @@
                     }, 'user')
                 });
             });
+
+            getHistoryButton.addEventListener('click', async () => {
+                const token = tokenInput.value;
+                if (token == '') {
+                    alert('Please put access token');
+                    return;
+                }
+
+                startButton.style.display = 'none';
+                getHistoryButton.style.display = 'none';
+                chat.style.display = 'block';
+
+                const getHistoryResponse = await fetch(`${apiUrl}/gpt/history?chatId=${chatIdParam}`, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`,
+                    }
+                })
+
+                const historyJson = await getHistoryResponse.json();
+
+                console.log(historyJson)
+
+                const messages = historyJson.data.messages;
+
+                messages.forEach((message) => {
+                    pushMessageElement({
+                        id: (new Date()).getTime(),
+                        role: message.role,
+                        content: message.content
+                    })
+                })
+            })
         </script>
     </body>
 
